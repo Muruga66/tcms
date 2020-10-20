@@ -38,6 +38,8 @@ RUN /usr/bin/sscg -v -f \
     --ca-file       /Kiwi/static/ca.crt     \
     --cert-file     /Kiwi/ssl/localhost.crt \
     --cert-key-file /Kiwi/ssl/localhost.key
+RUN chmod +x manage.py
+ENTRYPOINT ["/Kiwi/manage.py"]
 RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" /Kiwi/manage.py && \
     ln -s /Kiwi/ssl/localhost.crt /etc/pki/tls/certs/localhost.crt && \
     ln -s /Kiwi/ssl/localhost.key /etc/pki/tls/private/localhost.key
