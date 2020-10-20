@@ -49,5 +49,5 @@ RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" /Kiwi/manage.py && \
 #RUN /Kiwi/manage.py collectstatic --noinput --link
 
 # from now on execute as non-root
-RUN chown -R 1001 /Kiwi/ /venv/
-USER 1001
+#RUN chown -R 1001 /Kiwi/ /venv/
+#USER 1001
