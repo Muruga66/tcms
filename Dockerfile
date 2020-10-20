@@ -25,15 +25,15 @@ ENV PATH /venv/bin:${PATH} \
 
 # copy virtualenv dir which has been built inside the kiwitcms/buildroot container
 # this helps keep -devel dependencies outside of this image
-COPY ./dist/venv/ /venv
+#COPY ./dist/venv/ /venv
 
 COPY ./manage.py /Kiwi/
 # create directories so we can properly set ownership for them
 RUN mkdir /Kiwi/ssl /Kiwi/static /Kiwi/uploads
 # generate self-signed SSL certificate
 RUN /usr/bin/sscg -v -f \
-    --country BG --locality Sofia \
-    --organization "Kiwi TCMS" \
+    --country BG --locality  \
+    --organization "42Gears TCMS" \
     --organizational-unit "Quality Engineering" \
     --ca-file       /Kiwi/static/ca.crt     \
     --cert-file     /Kiwi/ssl/localhost.crt \
