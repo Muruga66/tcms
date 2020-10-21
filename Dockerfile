@@ -28,7 +28,7 @@ ENV PATH /venv/bin:${PATH} \
 #COPY ./dist/venv/ /venv
 
 # Create a virtualenv for the application dependencies
-RUN virtualenv /venv
+RUN VIRTUAL_ENV /venv
 # because we get some errors from other packages which need newer versions
 RUN pip3 install --no-cache-dir --upgrade pip setuptools twine
 
@@ -47,6 +47,7 @@ RUN /usr/bin/sscg -v -f \
     --ca-file       /Kiwi/static/ca.crt     \
     --cert-file     /Kiwi/ssl/localhost.crt \
     --cert-key-file /Kiwi/ssl/localhost.key
+
 RUN chmod +x /Kiwi/manage.py
 ENTRYPOINT ["/Kiwi/manage.py"]
 RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" /Kiwi/manage.py && \
