@@ -27,6 +27,15 @@ ENV PATH /venv/bin:${PATH} \
 # this helps keep -devel dependencies outside of this image
 #COPY ./dist/venv/ /venv
 
+# Create a virtualenv for the application dependencies
+RUN virtualenv /venv
+# because we get some errors from other packages which need newer versions
+RUN pip3 install --no-cache-dir --upgrade pip setuptools twine
+
+# build and install the application
+COPY . /Kiwi/
+WORKDIR /Kiwi
+
 COPY ./manage.py /Kiwi/
 # create directories so we can properly set ownership for them
 RUN mkdir /Kiwi/ssl /Kiwi/static /Kiwi/uploads
@@ -45,9 +54,16 @@ RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" /Kiwi/manage.py && \
     ln -s /Kiwi/ssl/localhost.key /etc/pki/tls/private/localhost.key
 
 
+# install app dependencies so we can build the app later
+RUN pip3 install --no-cache-dir -r requirements/mariadb.txt
+RUN pip3 install --no-cache-dir -r requirements/postgres.txt
+
+RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" manage.py
+RUN ./tests/check-build
+RUN pip3 install --no-cache-dir dist/kiwitcms-*.tar.gz
 # collect static files
-#RUN /Kiwi/manage.py collectstatic --noinput --link
+RUN /Kiwi/manage.py collectstatic --noinput --link
 
 # from now on execute as non-root
-#RUN chown -R 1001 /Kiwi/ /venv/
-#USER 1001
+RUN chown -R 1001 /Kiwi/ /venv/
+USER 1001
