@@ -20,48 +20,36 @@ RUN sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf && \
     chmod -R a+rwx /run/httpd
 COPY ./etc/kiwi-httpd.conf /etc/httpd/conf.d/
 
+ENV PATH=/opt/rh/rh-python36/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64
+ENV PKG_CONFIG_PATH=/opt/rh/rh-python36/root/usr/lib64/pkgconfig
+ENV XDG_DATA_DIRS=/opt/rh/rh-python36/root/usr/share:/usr/local/share:/usr/share
+
 ENV PATH /venv/bin:${PATH} \
     VIRTUAL_ENV /venv
 
+ENV VIRTUAL_ENV=/venv
+
 # copy virtualenv dir which has been built inside the kiwitcms/buildroot container
 # this helps keep -devel dependencies outside of this image
-#COPY ./dist/venv/ /venv
-
-# Create a virtualenv for the application dependencies
-RUN VIRTUAL_ENV /venv
-# because we get some errors from other packages which need newer versions
-RUN pip3 install --no-cache-dir --upgrade pip setuptools twine
-
-# build and install the application
-COPY . /Kiwi/
-WORKDIR /Kiwi
+COPY ./dist/venv/ /venv
 
 COPY ./manage.py /Kiwi/
 # create directories so we can properly set ownership for them
 RUN mkdir /Kiwi/ssl /Kiwi/static /Kiwi/uploads
 # generate self-signed SSL certificate
 RUN /usr/bin/sscg -v -f \
-    --country BG --locality  \
-    --organization "42Gears TCMS" \
+    --country BG --locality Sofia \
+    --organization "Kiwi TCMS" \
     --organizational-unit "Quality Engineering" \
     --ca-file       /Kiwi/static/ca.crt     \
     --cert-file     /Kiwi/ssl/localhost.crt \
     --cert-key-file /Kiwi/ssl/localhost.key
-
-RUN chmod +x /Kiwi/manage.py
-ENTRYPOINT ["/Kiwi/manage.py"]
 RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" /Kiwi/manage.py && \
     ln -s /Kiwi/ssl/localhost.crt /etc/pki/tls/certs/localhost.crt && \
     ln -s /Kiwi/ssl/localhost.key /etc/pki/tls/private/localhost.key
 
 
-# install app dependencies so we can build the app later
-RUN pip3 install --no-cache-dir -r requirements/mariadb.txt
-RUN pip3 install --no-cache-dir -r requirements/postgres.txt
-
-RUN sed -i "s/tcms.settings.devel/tcms.settings.product/" manage.py
-RUN ./tests/check-build
-RUN pip3 install --no-cache-dir dist/kiwitcms-*.tar.gz
 # collect static files
 RUN /Kiwi/manage.py collectstatic --noinput --link
 
