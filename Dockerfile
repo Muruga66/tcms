@@ -21,6 +21,21 @@ RUN sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf && \
 COPY ./etc/kiwi-httpd.conf /etc/httpd/conf.d/
 
 ENV PATH=/opt/rh/rh-python36/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# make sure Python 3.6 is enabled by default
+ENV PATH /venv/bin:/opt/rh/rh-python36/root/usr/bin${PATH:+:${PATH}} \
+    LD_LIBRARY_PATH /opt/rh/rh-python36/root/usr/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} \
+    PKG_CONFIG_PATH /opt/rh/rh-python36/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} \
+    XDG_DATA_DIRS "/opt/rh/rh-python36/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" \
+    VIRTUAL_ENV /venv
+
+# copy virtualenv dir which has been built inside the kiwitcms/buildroot container
+# this helps keep -devel dependencies outside of this image
+COPY ./dist/venv/ /venv
+
+# replace standard mod_wsgi with one compiled for Python 3
+RUN ln -fs /venv/lib64/python3.6/site-packages/mod_wsgi/server/mod_wsgi-py36.cpython-36m-x86_64-linux-gnu.so \
+           /usr/lib64/httpd/modules/mod_wsgi.so
+
 ENV LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64
 ENV PKG_CONFIG_PATH=/opt/rh/rh-python36/root/usr/lib64/pkgconfig
 ENV XDG_DATA_DIRS=/opt/rh/rh-python36/root/usr/share:/usr/local/share:/usr/share
@@ -29,6 +44,7 @@ ENV PATH /venv/bin:${PATH} \
     VIRTUAL_ENV /venv
 
 ENV VIRTUAL_ENV=/venv
+ENV PATH=/venv/bin:/opt/rh/rh-python36/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # copy virtualenv dir which has been built inside the kiwitcms/buildroot container
 # this helps keep -devel dependencies outside of this image
@@ -40,7 +56,7 @@ RUN mkdir /Kiwi/ssl /Kiwi/static /Kiwi/uploads
 # generate self-signed SSL certificate
 RUN /usr/bin/sscg -v -f \
     --country BG --locality Sofia \
-    --organization "Kiwi TCMS" \
+    --organization "42Gears TCMS" \
     --organizational-unit "Quality Engineering" \
     --ca-file       /Kiwi/static/ca.crt     \
     --cert-file     /Kiwi/ssl/localhost.crt \
